@@ -23,6 +23,7 @@ import { SuccessModal } from './components/SuccessModal';
 import { ToolThanhExamView } from './components/ToolThanhExamView';
 import { StandardExamsLibraryView } from './components/StandardExamsLibraryView';
 import { StudentPracticeView } from './components/StudentPracticeView';
+import { AboutView } from './components/AboutView';
 import { GLOBAL_SUCCESS_UNITS } from './data/globalSuccessUnits';
 import { generateNextPaperVariant } from './utils/variantGenerator';
 import {
@@ -43,10 +44,16 @@ import {
 import { User } from './types/authTypes';
 import {
   Table,
-  FileText,
-  CheckCircle2,
-  FileArchive,
+  FileCheck2,
+  FileSpreadsheet,
   Download,
+  Eye,
+  FileText,
+  AlertTriangle,
+  HelpCircle,
+  Key,
+  ShieldCheck,
+  RefreshCw,
   Sparkles,
   Layers,
   BookOpen,
@@ -56,8 +63,8 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // Navigation tabs: 'toolThanh' | 'aiSuite' | 'library' (Ẩn tab pricing công khai theo yêu cầu)
-  const [activeMainTab, setActiveMainTab] = useState<'toolThanh' | 'aiSuite' | 'library'>('toolThanh');
+  // Navigation tabs: 'toolThanh' | 'aiSuite' | 'about' | 'library' (Ẩn tab pricing công khai theo yêu cầu)
+  const [activeMainTab, setActiveMainTab] = useState<'toolThanh' | 'aiSuite' | 'about' | 'library'>('toolThanh');
 
   // User Authentication & Session State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -414,25 +421,25 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Feature Stats Bar */}
+        {/* Feature Stats Bar: Thể hiện quy mô 48 Units & Sinh đề vô tận */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
           <div className="p-4 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-sm flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-sm font-black text-slate-900">20 Bộ Đề Chuẩn</div>
-              <div className="text-[11px] text-slate-500 font-medium">Khối 6, 7, 8, 9 (GK, CK, KSCL)</div>
+              <div className="text-sm font-black text-slate-900">48 Units SGK Toàn Diện</div>
+              <div className="text-[11px] text-slate-500 font-medium">Lớp 6, 7, 8, 9 (Hàng ngàn từ vựng & cấu trúc)</div>
             </div>
           </div>
 
           <div className="p-4 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-sm flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-              <Copy className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-sm font-black text-slate-900">40 Mã Đề Hoán Vị</div>
-              <div className="text-[11px] text-slate-500 font-medium">02 mã đề tương đương / bộ</div>
+              <div className="text-sm font-black text-slate-900">Sinh Đề Mới Vô Tận</div>
+              <div className="text-[11px] text-slate-500 font-medium">Tự động tạo câu hỏi mới không trùng lặp</div>
             </div>
           </div>
 
@@ -442,7 +449,7 @@ export default function App() {
             </div>
             <div>
               <div className="text-sm font-black text-slate-900">Chuẩn CV 7991/BGDĐT</div>
-              <div className="text-[11px] text-slate-500 font-medium">Năm học 2026 - 2027</div>
+              <div className="text-[11px] text-slate-500 font-medium">Ma trận 15 cột & Bản đặc tả 7 cột</div>
             </div>
           </div>
 
@@ -451,8 +458,8 @@ export default function App() {
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-sm font-black text-slate-900">04 Đề Cương 6 Trang</div>
-              <div className="text-[11px] text-slate-500 font-medium">Mục tiêu vững chắc 6.0+ điểm</div>
+              <div className="text-sm font-black text-slate-900">20 Bộ Đề Gốc Chuẩn Mẫu</div>
+              <div className="text-[11px] text-slate-500 font-medium">Kèm 04 Đề cương 6 trang mục tiêu 6.0+</div>
             </div>
           </div>
         </section>
@@ -462,6 +469,7 @@ export default function App() {
           <ToolThanhExamView
             onExamSuccess={handleExamSuccess}
             onOpenActivationModal={() => setIsOutOfTrialsModalOpen(true)}
+            onSwitchToAiSuite={() => setActiveMainTab('aiSuite')}
           />
         )}
 
@@ -652,6 +660,18 @@ export default function App() {
               </div>
             )}
           </div>
+        )}
+
+        {/* TAB GIỚI THIỆU: LỢI ÍCH ỨNG DỤNG CHO GIÁO VIÊN */}
+        {activeMainTab === 'about' && (
+          <AboutView
+            onGoToToolThanh={() => setActiveMainTab('toolThanh')}
+            onGoToAiSuite={() => setActiveMainTab('aiSuite')}
+            onOpenAuthModal={() => {
+              setAuthModalTab('register');
+              setIsAuthModalOpen(true);
+            }}
+          />
         )}
 
         {/* TAB 3: THƯ VIỆN 20 BỘ ĐỀ & ĐỀ CƯƠNG GỐC CHUẨN - CHỈ DÀNH CHO ADMIN */}

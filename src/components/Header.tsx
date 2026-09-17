@@ -17,8 +17,8 @@ import {
 import { User } from '../types/authTypes';
 
 interface HeaderProps {
-  activeTab: 'toolThanh' | 'aiSuite' | 'library';
-  setActiveTab: (tab: 'toolThanh' | 'aiSuite' | 'library') => void;
+  activeTab: 'toolThanh' | 'aiSuite' | 'about' | 'library';
+  setActiveTab: (tab: 'toolThanh' | 'aiSuite' | 'about' | 'library') => void;
   onOpenDecreeModal: () => void;
   onOpenApiKeyGuide: () => void;
   currentUser: User | null;
@@ -215,6 +215,19 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Wand2 className="w-4 h-4 text-teal-300" />
             <span>🤖 TẠO ĐỀ AI THEO UNIT & MẪU TRƯỜNG</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('about')}
+            className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+              activeTab === 'about'
+                ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md'
+                : 'text-amber-200 hover:text-white hover:bg-white/5 border border-amber-400/30'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>🌟 GIỚI THIỆU & LỢI ÍCH</span>
           </button>
 
           {/* KHO ĐỀ GỐC: ẨN VỚI NGƯỜI DÙNG, CHỈ ADMIN MỚI XEM ĐƯỢC */}

@@ -33,6 +33,7 @@ interface ToolThanhExamViewProps {
     downloadUrl?: string;
   }) => void;
   onOpenActivationModal: () => void;
+  onSwitchToAiSuite?: () => void;
 }
 
 interface ExamMeta {
@@ -275,6 +276,7 @@ const EXAM_CATALOG: Record<string, Record<string, ExamMeta>> = {
 export const ToolThanhExamView: React.FC<ToolThanhExamViewProps> = ({
   onExamSuccess,
   onOpenActivationModal,
+  onSwitchToAiSuite,
 }) => {
   const [grade, setGrade] = useState<'6' | '7' | '8' | '9'>('6');
   const [term, setTerm] = useState<'GK1' | 'CK1' | 'GK2' | 'CK2' | 'KSCL' | 'DECUONG'>('GK1');
@@ -377,6 +379,34 @@ export const ToolThanhExamView: React.FC<ToolThanhExamViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Banner phân định 2 chế độ: Đề chuẩn gốc vs Đề AI kho từ vựng vô tận */}
+      <div className="p-4 bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 text-white rounded-2xl shadow-md border border-blue-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-600/40 border border-blue-400/40 flex items-center justify-center shrink-0 mt-1 sm:mt-0">
+            <Sparkles className="w-5 h-5 text-amber-300" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm text-white">HAI CHẾ ĐỘ TẠO ĐỀ CHUYÊN NGHIỆP:</span>
+            </div>
+            <p className="text-xs text-blue-200 mt-0.5 leading-relaxed">
+              • <strong>Tại đây (Tab 1):</strong> Tải hoặc sinh mã đề mới từ <strong>20 bộ đề mẫu chuẩn 53KB</strong> của trường (đầy đủ ma trận, đặc tả, bảng điểm chuẩn).<br />
+              • <strong>Tạo đề với kho từ vựng vô tận (Tab 2):</strong> Tự do chọn các Unit (1 - 12) để AI tự động sinh hàng ngàn câu hỏi, từ vựng, bài đọc mới toanh không trùng lặp!
+            </p>
+          </div>
+        </div>
+        {onSwitchToAiSuite && (
+          <button
+            type="button"
+            onClick={onSwitchToAiSuite}
+            className="px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 shrink-0 transition"
+          >
+            <span>Sang Tạo Đề AI (48 Units)</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       {/* Grid 2 Cột: Cột Trái Bộ Điều Khiển - Cột Phải Bản Đặc Tả Kỹ Thuật */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
