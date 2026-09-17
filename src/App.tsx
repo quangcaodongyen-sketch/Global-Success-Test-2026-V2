@@ -113,6 +113,13 @@ export default function App() {
     });
   }, []);
 
+  // Bảo vệ Kho đề: Nếu không phải admin thì tự động chuyển về trang tạo đề chuẩn
+  useEffect(() => {
+    if (activeMainTab === 'library' && currentUser?.role !== 'admin') {
+      setActiveMainTab('toolThanh');
+    }
+  }, [activeMainTab, currentUser]);
+
   const refreshLicense = () => {
     const updated = getCurrentUser();
     setCurrentUser(updated);
@@ -647,12 +654,30 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 3: THƯ VIỆN 20 BỘ ĐỀ & ĐỀ CƯƠNG GỐC CHUẨN */}
+        {/* TAB 3: THƯ VIỆN 20 BỘ ĐỀ & ĐỀ CƯƠNG GỐC CHUẨN - CHỈ DÀNH CHO ADMIN */}
         {activeMainTab === 'library' && (
-          <StandardExamsLibraryView
-            onExamSuccess={handleExamSuccess}
-            onOpenActivationModal={() => setIsOutOfTrialsModalOpen(true)}
-          />
+          currentUser?.role === 'admin' ? (
+            <StandardExamsLibraryView
+              onExamSuccess={handleExamSuccess}
+              onOpenActivationModal={() => setIsOutOfTrialsModalOpen(true)}
+            />
+          ) : (
+            <div className="p-8 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 text-center space-y-4 max-w-lg mx-auto my-12 shadow-lg">
+              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Khu Vực Lưu Trữ Nội Bộ</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Kho 20 bộ đề và đề cương gốc chuẩn hóa là tài nguyên nội bộ độc quyền dành riêng cho Quản trị viên (Admin Thầy Đinh Văn Thành).
+              </p>
+              <button
+                onClick={() => setActiveMainTab('toolThanh')}
+                className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl text-xs hover:bg-blue-700 transition shadow-md"
+              >
+                Quay lại Trang Tạo Đề Chuẩn
+              </button>
+            </div>
+          )
         )}
       </main>
 
@@ -679,6 +704,7 @@ export default function App() {
           refreshLicense();
         }}
         currentUser={currentUser}
+        onOpenLibrary={() => setActiveMainTab('library')}
       />
 
       {/* Hướng Dẫn Cài Đặt API Key Chuẩn Giáo Viên (6 Bước + 4 Nút) */}

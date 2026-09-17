@@ -217,18 +217,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span>🤖 TẠO ĐỀ AI THEO UNIT & MẪU TRƯỜNG</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('library')}
-            className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-              activeTab === 'library'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md'
-                : 'text-slate-300 hover:text-white hover:bg-white/5'
-            }`}
-          >
-            <Library className="w-4 h-4 text-purple-300" />
-            <span>📚 THƯ VIỆN 20 BỘ ĐỀ & ĐỀ CƯƠNG GỐC</span>
-          </button>
+          {/* KHO ĐỀ GỐC: ẨN VỚI NGƯỜI DÙNG, CHỈ ADMIN MỚI XEM ĐƯỢC */}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('library')}
+              className={`px-4 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-2 shrink-0 cursor-pointer border ${
+                activeTab === 'library'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400 shadow-md shadow-purple-600/30'
+                  : 'text-purple-200 hover:text-white hover:bg-purple-950/60 border-purple-500/40 bg-purple-950/20'
+              }`}
+              title="Kho lưu trữ 20 bộ đề & đề cương gốc (Chỉ dành riêng cho Admin)"
+            >
+              <Library className="w-4 h-4 text-amber-300" />
+              <span>📚 KHO ĐỀ GỐC (ADMIN)</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

@@ -48,12 +48,14 @@ interface AdminDashboardProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: User | null;
+  onOpenLibrary?: () => void;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   isOpen,
   onClose,
   currentUser,
+  onOpenLibrary,
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'members' | 'lessonPlans' | 'analytics' | 'settings'>('overview');
 
@@ -245,7 +247,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {onOpenLibrary && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenLibrary();
+                }}
+                className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-md shadow-purple-600/30 text-white border border-purple-400/40 transition"
+                title="Mở kho lưu trữ 20 bộ đề và 4 đề cương gốc chuẩn"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-300" />
+                <span className="hidden sm:inline">Mở Kho Đề Gốc Chuẩn</span>
+                <span className="sm:hidden">Kho Đề</span>
+              </button>
+            )}
             <button
               onClick={refreshData}
               className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-colors"
@@ -940,7 +956,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       type="password"
                       value={oldAdminPass}
                       onChange={e => setOldAdminPass(e.target.value)}
-                      placeholder="Mặc định: Admin123@"
+                      placeholder="Nhập mật khẩu hiện tại..."
                       className="w-full px-3 py-2 text-xs border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
                     />
                   </div>

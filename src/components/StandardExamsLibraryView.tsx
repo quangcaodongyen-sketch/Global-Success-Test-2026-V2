@@ -9,6 +9,7 @@ import {
   Award,
   Mic,
   MicOff,
+  ShieldCheck,
 } from 'lucide-react';
 import { consumeTrial, getSchoolConfig } from '../utils/licenseManager';
 import { downloadCustomizedStandardDocx } from '../utils/exactExamTemplateEngine';
@@ -134,6 +135,26 @@ export const StandardExamsLibraryView: React.FC<StandardExamsLibraryViewProps> =
 
   return (
     <div className="space-y-6">
+      {/* Banner Khu vực Admin */}
+      <div className="p-4 bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 text-white rounded-2xl shadow-md border border-purple-500/40 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-purple-600/40 border border-purple-400/40 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-5 h-5 text-amber-300" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm text-white">KHO ĐỀ GỐC NỘI BỘ - QUẢN TRỊ VIÊN ADMIN</span>
+              <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded text-[10px] font-bold">
+                Bảo Mật Nội Bộ
+              </span>
+            </div>
+            <p className="text-xs text-purple-200 mt-0.5">
+              Toàn bộ 20 bộ đề mẫu 53KB và 04 tài liệu đề cương 6 trang gốc của Thầy Đinh Văn Thành. Chỉ tài khoản Admin mới có quyền truy cập và tải trực tiếp.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Top Filter Bar */}
       <div className="p-5 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">

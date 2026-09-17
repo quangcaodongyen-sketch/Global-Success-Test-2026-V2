@@ -69,22 +69,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Xử lý điền nhanh thông tin Admin mẫu khi click
-  const handleFillAdmin = () => {
-    setLoginUsername('Admin');
-    setLoginPassword('Admin123@');
-    setErrorMsg(null);
-  };
-
-  // Xử lý điền nhanh mẫu thành viên ví dụ theo đề bài
+  // Xử lý điền nhanh mẫu thành viên ví dụ cho người dùng kiểm tra chức năng đăng ký
   const handleFillSampleMember = () => {
-    setRegFullName('Đinh Văn Thành');
-    setRegSchool('THCS Đồng Yên');
-    setRegPhone('0915213717');
-    setRegUsername('Thanhvip');
-    setRegPassword('Thanh2026@');
-    setRegConfirmPassword('Thanh2026@');
-    setRegProvince('Tuyên Quang');
+    setRegFullName('Nguyễn Thị Lan');
+    setRegSchool('Trường THCS Chu Văn An');
+    setRegPhone('0988123456');
+    setRegUsername('giaovien_lan');
+    setRegPassword('Giaovien123@');
+    setRegConfirmPassword('Giaovien123@');
+    setRegProvince('Hà Nội');
     setRegSubject('Tiếng Anh');
     setRegGradeLevel('THCS (Lớp 6-9)');
     setErrorMsg(null);
@@ -293,19 +286,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
 
-              {/* Gợi ý nhanh Admin */}
-              <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800 flex items-center justify-between">
-                <div>
-                  <span className="font-semibold">Tài khoản Admin:</span> <code className="bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono">Admin</code> / <code className="bg-white px-1.5 py-0.5 rounded border border-indigo-200 font-mono">Admin123@</code>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleFillAdmin}
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline decoration-indigo-300"
-                >
-                  Điền nhanh
-                </button>
-              </div>
+
 
               <button
                 type="submit"
