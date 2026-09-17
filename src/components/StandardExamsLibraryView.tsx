@@ -10,7 +10,8 @@ import {
   Mic,
   MicOff,
 } from 'lucide-react';
-import { consumeTrial } from '../utils/licenseManager';
+import { consumeTrial, getSchoolConfig } from '../utils/licenseManager';
+import { downloadCustomizedStandardDocx } from '../utils/exactExamTemplateEngine';
 
 interface StandardExamsLibraryViewProps {
   onExamSuccess: (info: {
@@ -84,25 +85,51 @@ export const StandardExamsLibraryView: React.FC<StandardExamsLibraryViewProps> =
     return matchesGrade && matchesSearch;
   });
 
-  const handleDownload = (item: LibraryItem) => {
+  const handleDownload = async (item: LibraryItem) => {
     const trial = consumeTrial();
     if (!trial.allowed) {
       onOpenActivationModal();
       return;
     }
 
-    const a = document.createElement('a');
-    a.href = item.relPath;
-    a.download = item.fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    try {
+      const cfg = getSchoolConfig();
+      const result = await downloadCustomizedStandardDocx({
+        relPath: item.relPath,
+        defaultFileName: item.fileName,
+        parentAgency: cfg.parentAgency,
+        schoolName: cfg.schoolName,
+      });
 
-    onExamSuccess({
-      fileName: item.fileName,
-      examTitle: `Đề Kiểm Tra Tiếng Anh ${item.grade} - ${item.termName}`,
-      downloadUrl: item.relPath,
-    });
+      const url = URL.createObjectURL(result.blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = result.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      onExamSuccess({
+        fileName: result.fileName,
+        examTitle: `Đề Kiểm Tra Tiếng Anh ${item.grade} - ${item.termName}`,
+        fileBlob: result.blob,
+      });
+    } catch {
+      // Fallback tải trực tiếp nếu có lỗi đọc zip
+      const a = document.createElement('a');
+      a.href = item.relPath;
+      a.download = item.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      onExamSuccess({
+        fileName: item.fileName,
+        examTitle: `Đề Kiểm Tra Tiếng Anh ${item.grade} - ${item.termName}`,
+        downloadUrl: item.relPath,
+      });
+    }
   };
 
   return (

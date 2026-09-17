@@ -107,14 +107,22 @@ export async function generateExamPaperDocx(paper: ExamPaper, showCognition: boo
 
   const children: (Paragraph | Table)[] = [
     // Header block
-    createExamHeaderTable(admin.schoolName, paper.examType, paper.grade, admin.academicYear, paper.code, admin.durationMinutes),
+    createExamHeaderTable(
+      admin.schoolName,
+      paper.examType,
+      paper.grade,
+      admin.academicYear,
+      paper.code,
+      admin.durationMinutes,
+      admin.parentAgency
+    ),
 
-    new Paragraph({ spacing: { after: 150 } }),
+    new Paragraph({ spacing: { after: 120 } }),
 
-    // Student Info Box
-    createStudentInfoTable(paper.examType),
+    // Student Info Box & Marks Table
+    ...createStudentInfoElements(paper.grade, paper.code),
 
-    new Paragraph({ spacing: { after: 250 } }),
+    new Paragraph({ spacing: { after: 180 } }),
   ];
 
   // Render Sections
@@ -753,17 +761,29 @@ function createHeaderBlock(schoolName: string, subTitle: string): Table {
   });
 }
 
+function getSavedAgency(schoolName: string): string {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('school_exam_config') : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.parentAgency) return parsed.parentAgency.toUpperCase();
+    }
+  } catch {}
+  return schoolName.toUpperCase().includes('ĐỒNG YÊN') ? 'UBND XÃ ĐỒNG YÊN' : 'PHÒNG GIÁO DỤC VÀ ĐÀO TẠO';
+}
+
 function createExamHeaderTable(
   schoolName: string,
   examType: string,
   grade: string,
   academicYear: string,
   code: string,
-  durationMinutes: number
+  durationMinutes: number,
+  parentAgency?: string
 ): Table {
-  const schoolUpper = (schoolName || '').toUpperCase();
-  const ubndText = schoolUpper.includes('ĐỒNG YÊN') ? 'UBND XÃ ĐỒNG YÊN' : 'UBND XÃ .............';
-  const gradeNum = (grade || '').replace(/[^0-9]/g, '');
+  const schoolUpper = (schoolName || 'TRƯỜNG THCS ĐỒNG YÊN').trim().toUpperCase();
+  const ubndText = (parentAgency || getSavedAgency(schoolUpper)).trim().toUpperCase();
+  const gradeNum = (grade || '').replace(/[^0-9]/g, '') || '6';
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -779,15 +799,16 @@ function createExamHeaderTable(
       new TableRow({
         children: [
           new TableCell({
-            width: { size: 45, type: WidthType.PERCENTAGE },
+            width: { size: 40, type: WidthType.PERCENTAGE },
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
+                spacing: { after: 40 },
                 children: [
                   new TextRun({
                     text: ubndText,
                     bold: true,
-                    size: 24, // 12pt
+                    size: 23, // 11.5pt
                     font: FONT_FAMILY,
                   }),
                 ],
@@ -798,20 +819,8 @@ function createExamHeaderTable(
                   new TextRun({
                     text: schoolUpper,
                     bold: true,
-                    color: 'FF0000', // RED
-                    size: 24,
-                    font: FONT_FAMILY,
-                  }),
-                ],
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 50 },
-                children: [
-                  new TextRun({
-                    text: '_________________',
-                    bold: true,
-                    size: 20,
+                    underline: {},
+                    size: 23, // 11.5pt
                     font: FONT_FAMILY,
                   }),
                 ],
@@ -819,44 +828,40 @@ function createExamHeaderTable(
             ],
           }),
           new TableCell({
-            width: { size: 55, type: WidthType.PERCENTAGE },
+            width: { size: 60, type: WidthType.PERCENTAGE },
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
+                spacing: { after: 30 },
                 children: [
                   new TextRun({
                     text: `BÀI KIỂM TRA ĐÁNH GIÁ ${(examType || '').toUpperCase()}`,
                     bold: true,
-                    size: 26, // 13pt
+                    size: 25, // 12.5pt
                     font: FONT_FAMILY,
                   }),
                 ],
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
+                spacing: { after: 30 },
                 children: [
                   new TextRun({
                     text: `NĂM HỌC: ${academicYear}`,
                     bold: true,
-                    size: 24,
+                    size: 23,
                     font: FONT_FAMILY,
                   }),
                 ],
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
+                spacing: { after: 30 },
                 children: [
                   new TextRun({
-                    text: `Môn: Tiếng Anh `,
+                    text: `Môn: Tiếng Anh ${gradeNum}`,
                     bold: true,
-                    size: 24,
-                    font: FONT_FAMILY,
-                  }),
-                  new TextRun({
-                    text: gradeNum,
-                    bold: true,
-                    color: 'FF0000', // RED
-                    size: 24,
+                    size: 25,
                     font: FONT_FAMILY,
                   }),
                 ],
@@ -867,7 +872,7 @@ function createExamHeaderTable(
                   new TextRun({
                     text: `Thời gian: ${durationMinutes} phút`,
                     italics: true,
-                    size: 24,
+                    size: 23,
                     font: FONT_FAMILY,
                   }),
                 ],
@@ -880,237 +885,104 @@ function createExamHeaderTable(
   });
 }
 
-function createStudentInfoTable(examType: string): Table {
-  const isFinal = (examType || '').toUpperCase().includes('CUỐI KÌ') || (examType || '').toUpperCase().includes('CUỐI KỲ');
+function createStudentInfoElements(grade: string = '6', code: string = '001'): (Paragraph | Table)[] {
+  const gradeNum = (grade || '').replace(/[^0-9]/g, '') || '6';
 
-  const marksTableRows = isFinal
-    ? [
-        // Row 1: Headers
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: 30, type: WidthType.PERCENTAGE },
-              columnSpan: 2,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: 'Mark',
-                      bold: true,
-                      size: 26,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              rowSpan: 2,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 200, after: 200 },
-                  children: [
-                    new TextRun({
-                      text: 'Total',
-                      bold: true,
-                      size: 26,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 55, type: WidthType.PERCENTAGE },
-              rowSpan: 2,
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 200, after: 200 },
-                  children: [
-                    new TextRun({
-                      text: "Teacher's remark",
-                      bold: true,
-                      size: 26,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-        // Row 2: Sub-headers for Mark
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: 'Speak',
-                      bold: true,
-                      size: 24,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: 'Write',
-                      bold: true,
-                      size: 24,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-        // Row 3: Empty spacing for values and remarks
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({ spacing: { before: 400, after: 400 } }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({ spacing: { before: 400, after: 400 } }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 15, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({ spacing: { before: 400, after: 400 } }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 55, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: '.......................................................................................\n\n.......................................................................................',
-                      size: 22,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ]
-    : [
-        new TableRow({
-          children: [
-            new TableCell({
-              width: { size: 30, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: 'Marks',
-                      bold: true,
-                      size: 26,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-                new Paragraph({ spacing: { before: 300, after: 300 } }),
-              ],
-            }),
-            new TableCell({
-              width: { size: 70, type: WidthType.PERCENTAGE },
-              children: [
-                new Paragraph({
-                  alignment: AlignmentType.CENTER,
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: "Teacher's remarks",
-                      bold: true,
-                      size: 26,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-                new Paragraph({
-                  spacing: { before: 100, after: 100 },
-                  children: [
-                    new TextRun({
-                      text: '____________________________________________________________________\n\n____________________________________________________________________',
-                      size: 22,
-                      font: FONT_FAMILY,
-                    }),
-                  ],
-                }),
-              ],
-            }),
-          ],
-        }),
-      ];
+  const nameParagraph = new Paragraph({
+    spacing: { before: 80, after: 120 },
+    children: [
+      new TextRun({
+        text: 'Full name: ____________________________________,      ',
+        size: 26,
+        font: FONT_FAMILY,
+      }),
+      new TextRun({
+        text: `Class: ${gradeNum}A___      `,
+        size: 26,
+        font: FONT_FAMILY,
+      }),
+      new TextRun({
+        text: `Mã đề ${code}`,
+        bold: true,
+        size: 26,
+        font: FONT_FAMILY,
+      }),
+    ],
+  });
 
-  return new Table({
+  const thinBorder = { style: BorderStyle.SINGLE, size: 4, color: '000000' };
+  const cellBorders = {
+    top: thinBorder,
+    bottom: thinBorder,
+    left: thinBorder,
+    right: thinBorder,
+  };
+
+  const marksTable = new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: {
-      top: { style: BorderStyle.NONE },
-      bottom: { style: BorderStyle.NONE },
-      left: { style: BorderStyle.NONE },
-      right: { style: BorderStyle.NONE },
-      insideHorizontal: { style: BorderStyle.NONE },
-      insideVertical: { style: BorderStyle.NONE },
+      top: thinBorder,
+      bottom: thinBorder,
+      left: thinBorder,
+      right: thinBorder,
+      insideHorizontal: thinBorder,
+      insideVertical: thinBorder,
     },
     rows: [
+      // Row 0: Headers
       new TableRow({
         children: [
           new TableCell({
-            width: { size: 100, type: WidthType.PERCENTAGE },
+            width: { size: 22, type: WidthType.PERCENTAGE },
+            columnSpan: 2,
+            borders: cellBorders,
             children: [
               new Paragraph({
-                spacing: { before: 150, after: 150 },
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 60, after: 60 },
                 children: [
                   new TextRun({
-                    text: 'Full name: ',
-                    size: 26,
+                    text: 'Marks',
+                    bold: true,
+                    size: 23,
                     font: FONT_FAMILY,
                   }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 13, type: WidthType.PERCENTAGE },
+            rowSpan: 2,
+            borders: cellBorders,
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 120, after: 120 },
+                children: [
                   new TextRun({
-                    text: '____________________________________',
-                    size: 26,
+                    text: 'Total',
+                    bold: true,
+                    size: 23,
                     font: FONT_FAMILY,
                   }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 65, type: WidthType.PERCENTAGE },
+            rowSpan: 2,
+            borders: cellBorders,
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 120, after: 120 },
+                children: [
                   new TextRun({
-                    text: ', class: ',
-                    size: 26,
-                    font: FONT_FAMILY,
-                  }),
-                  new TextRun({
-                    text: '... ____',
-                    size: 26,
+                    text: "Teacher's remarks",
+                    bold: true,
+                    size: 23,
                     font: FONT_FAMILY,
                   }),
                 ],
@@ -1119,13 +991,88 @@ function createStudentInfoTable(examType: string): Table {
           }),
         ],
       }),
+      // Row 1: Sub-headers for Speak / Write
       new TableRow({
         children: [
           new TableCell({
+            width: { size: 11, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
             children: [
-              new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: marksTableRows,
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 60, after: 60 },
+                children: [
+                  new TextRun({
+                    text: 'Speak',
+                    bold: true,
+                    size: 23,
+                    font: FONT_FAMILY,
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 11, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 60, after: 60 },
+                children: [
+                  new TextRun({
+                    text: 'Write',
+                    bold: true,
+                    size: 23,
+                    font: FONT_FAMILY,
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      // Row 2: Empty scores & Teacher's remarks underlines
+      new TableRow({
+        children: [
+          new TableCell({
+            width: { size: 11, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
+            children: [new Paragraph({ spacing: { before: 300, after: 300 } })],
+          }),
+          new TableCell({
+            width: { size: 11, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
+            children: [new Paragraph({ spacing: { before: 300, after: 300 } })],
+          }),
+          new TableCell({
+            width: { size: 13, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
+            children: [new Paragraph({ spacing: { before: 300, after: 300 } })],
+          }),
+          new TableCell({
+            width: { size: 65, type: WidthType.PERCENTAGE },
+            borders: cellBorders,
+            children: [
+              new Paragraph({
+                spacing: { before: 80, after: 60 },
+                children: [
+                  new TextRun({
+                    text: '________________________________________________',
+                    size: 22,
+                    font: FONT_FAMILY,
+                  }),
+                ],
+              }),
+              new Paragraph({
+                spacing: { before: 40, after: 80 },
+                children: [
+                  new TextRun({
+                    text: '________________________________________________',
+                    size: 22,
+                    font: FONT_FAMILY,
+                  }),
+                ],
               }),
             ],
           }),
@@ -1133,6 +1080,12 @@ function createStudentInfoTable(examType: string): Table {
       }),
     ],
   });
+
+  return [nameParagraph, marksTable];
+}
+
+function createStudentInfoTable(examType?: string, grade: string = '6', code: string = '001'): Table {
+  return createStudentInfoElements(grade, code)[1] as Table;
 }
 
 function createMatrixTable(matrix: MatrixItem[]): Table {
@@ -1614,4 +1567,372 @@ function createSignatureBlock(teacherName: string): Table {
       }),
     ],
   });
+}
+
+/**
+ * Xuất 1 file Word (.docx) DUY NHẤT trọn bộ gồm:
+ * - Section 1: Ma trận & Bản đặc tả kỹ thuật
+ * - Section 2: Đề kiểm tra Mã 001
+ * - Section 3: Đề kiểm tra Mã 002 (nếu có)
+ * - Section 4: Hướng dẫn chấm & Đáp án
+ */
+export async function generateFullExamPackageDocx(
+  suite: FullExamSuite,
+  showCognition: boolean = true
+): Promise<Blob> {
+  const paper0 = suite.papers[0];
+  const admin = paper0?.adminInfo || {
+    schoolName: 'TRƯỜNG THCS ĐỒNG YÊN',
+    academicYear: '2026 - 2027',
+    teacherName: 'Thầy giáo Đinh Văn Thành',
+    durationMinutes: 60,
+  };
+
+  const sections: any[] = [];
+
+  // 1. SECTION 1: MA TRẬN & BẢN ĐẶC TẢ
+  sections.push({
+    properties: { page: { margin: MARGINS } },
+    children: [
+      createHeaderBlock(admin.schoolName, 'MA TRẬN VÀ BẢN ĐẶC TẢ ĐỀ KIỂM TRA'),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200, before: 200 },
+        children: [
+          new TextRun({
+            text: `MA TRẬN ĐỀ KIỂM TRA MÔN TIẾNG ANH ${(paper0?.grade || '').toUpperCase()} - ${(paper0?.examType || '').toUpperCase()}`,
+            bold: true,
+            size: 28,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300 },
+        children: [
+          new TextRun({
+            text: `Năm học: ${admin.academicYear} | Thời gian: ${admin.durationMinutes} phút`,
+            italics: true,
+            size: 24,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+      createMatrixTable(suite.matrix),
+      new Paragraph({ spacing: { after: 300 } }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200, before: 200 },
+        children: [
+          new TextRun({
+            text: `BẢN ĐẶC TẢ KỸ THUẬT ĐỀ KIỂM TRA MÔN TIẾNG ANH ${(paper0?.grade || '').toUpperCase()}`,
+            bold: true,
+            size: 28,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+      createSpecTable(suite.specifications),
+      createSignatureBlock(admin.teacherName),
+    ],
+  });
+
+  // 2. CÁC SECTION ĐỀ KIỂM TRA (MÃ 001, 002,...)
+  suite.papers.forEach((paper) => {
+    const examChildren: (Paragraph | Table)[] = [
+      createExamHeaderTable(
+        admin.schoolName,
+        paper.examType,
+        paper.grade,
+        admin.academicYear,
+        paper.code,
+        admin.durationMinutes,
+        admin.parentAgency
+      ),
+      new Paragraph({ spacing: { after: 120 } }),
+      ...createStudentInfoElements(paper.grade, paper.code),
+      new Paragraph({ spacing: { after: 180 } }),
+    ];
+
+    const safeSections = Array.isArray(paper.sections) ? paper.sections : [];
+    safeSections.forEach((section) => {
+      examChildren.push(
+        new Paragraph({
+          spacing: { before: 200, after: 100 },
+          children: [
+            new TextRun({
+              text: section.title,
+              bold: true,
+              size: 26, // 13pt chuẩn
+              font: FONT_FAMILY,
+            }),
+          ],
+        })
+      );
+
+      if (section.instructions) {
+        examChildren.push(
+          new Paragraph({
+            spacing: { after: 150 },
+            children: [
+              new TextRun({
+                text: section.instructions,
+                italics: true,
+                size: 26,
+                font: FONT_FAMILY,
+              }),
+            ],
+          })
+        );
+      }
+
+      if (section.readingPassage) {
+        examChildren.push(
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    children: [
+                      new Paragraph({
+                        children: [
+                          new TextRun({
+                            text: section.readingPassage,
+                            size: 26,
+                            font: FONT_FAMILY,
+                          }),
+                        ],
+                      }),
+                    ],
+                    shading: { fill: 'F8FAFC' },
+                    margins: { top: 150, bottom: 150, left: 150, right: 150 },
+                  }),
+                ],
+              }),
+            ],
+          }),
+          new Paragraph({ spacing: { after: 150 } })
+        );
+      }
+
+      (Array.isArray(section.questions) ? section.questions : []).forEach((q) => {
+        const isEssay = q.type === 'ESSAY' || q.type === 'WRITING' || (q.prompt && q.prompt.toLowerCase().includes('write a paragraph'));
+
+        examChildren.push(
+          new Paragraph({
+            spacing: { before: 80, after: 60 },
+            children: [
+              new TextRun({
+                text: `Question ${q.questionNumber}. `,
+                bold: true,
+                size: 26,
+                font: FONT_FAMILY,
+              }),
+              new TextRun({
+                text: q.prompt,
+                size: 26,
+                font: FONT_FAMILY,
+              }),
+              ...(showCognition && !isEssay
+                ? [
+                    new TextRun({
+                      text: ` [${q.points}đ - ${q.cognitionLevel}]`,
+                      italics: true,
+                      size: 22,
+                      font: FONT_FAMILY,
+                    }),
+                  ]
+                : []),
+            ],
+          })
+        );
+
+        if (q.options && q.options.length > 0) {
+          const optTexts = q.options.map(o => `${o.key}. ${o.text}`).join('       ');
+          examChildren.push(
+            new Paragraph({
+              spacing: { after: 100 },
+              indent: { left: 400 },
+              children: [
+                new TextRun({
+                  text: optTexts,
+                  size: 26,
+                  font: FONT_FAMILY,
+                }),
+              ],
+            })
+          );
+        }
+
+        // Nếu là câu viết tự luận: Thêm 10 dòng kẻ chấm dot lines chuẩn đề mẫu
+        if (isEssay) {
+          for (let d = 0; d < 10; d++) {
+            examChildren.push(
+              new Paragraph({
+                spacing: { before: 50, after: 50 },
+                children: [
+                  new TextRun({
+                    text: '.........................................................................................................................................................',
+                    size: 24,
+                    font: FONT_FAMILY,
+                    color: '666666',
+                  }),
+                ],
+              })
+            );
+          }
+        }
+      });
+    });
+
+    examChildren.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { before: 300, after: 200 },
+        children: [
+          new TextRun({
+            text: `------The end------`,
+            bold: true,
+            size: 26,
+            font: FONT_FAMILY,
+          }),
+        ],
+      })
+    );
+
+    sections.push({
+      properties: { page: { margin: MARGINS } },
+      children: examChildren,
+    });
+  });
+
+  // 3. SECTION ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM
+  if (paper0) {
+    const answerChildren: (Paragraph | Table)[] = [
+      createHeaderBlock(admin.schoolName, 'HƯỚNG DẪN ĐÁP ÁN VÀ BIỂU ĐIỂM'),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 200, before: 200 },
+        children: [
+          new TextRun({
+            text: `ĐÁP ÁN VÀ BIỂU ĐIỂM - MÔN TIẾNG ANH ${(paper0.grade || '').toUpperCase()}`,
+            bold: true,
+            size: 28,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+    ];
+
+    // Bổ sung Audio Scripts nếu có
+    if (paper0.audioScript) {
+      answerChildren.push(
+        new Paragraph({
+          spacing: { before: 200, after: 100 },
+          children: [
+            new TextRun({
+              text: 'NỘI DUNG BÀI NGHE (AUDIO SCRIPTS - DÙNG CHO CÁC MÃ ĐỀ):',
+              bold: true,
+              size: 26,
+              font: FONT_FAMILY,
+            }),
+          ],
+        }),
+        new Paragraph({
+          spacing: { after: 200 },
+          children: [
+            new TextRun({
+              text: paper0.audioScript,
+              italics: true,
+              size: 24,
+              font: FONT_FAMILY,
+            }),
+          ],
+        })
+      );
+    }
+
+    // Bảng đáp án trắc nghiệm
+    answerChildren.push(
+      new Paragraph({
+        spacing: { before: 150, after: 100 },
+        children: [
+          new TextRun({
+            text: `I. BẢNG ĐÁP ÁN TRẮC NGHIỆM KHÁCH QUAN (MÃ ĐỀ ${paper0.code}):`,
+            bold: true,
+            size: 26,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+      createCompactAnswerGridTable(paper0),
+      new Paragraph({ spacing: { after: 200 } }),
+      new Paragraph({
+        spacing: { before: 150, after: 100 },
+        children: [
+          new TextRun({
+            text: `II. ĐÁP ÁN CHI TIẾT KÈM GIẢI THÍCH:`,
+            bold: true,
+            size: 26,
+            font: FONT_FAMILY,
+          }),
+        ],
+      }),
+      createAnswerKeyTable(paper0)
+    );
+
+    // Bổ sung Speaking Test guidelines nếu có
+    if (paper0.speakingTopics && paper0.speakingTopics.length > 0) {
+      answerChildren.push(
+        new Paragraph({
+          spacing: { before: 200, after: 100 },
+          children: [
+            new TextRun({
+              text: 'III. HƯỚNG DẪN CHẤM VÀ GỢI Ý ĐÁP ÁN PHẦN THI NÓI (SPEAKING TEST):',
+              bold: true,
+              size: 26,
+              font: FONT_FAMILY,
+            }),
+          ],
+        }),
+        ...paper0.speakingTopics.flatMap((topic, idx) => [
+          new Paragraph({
+            spacing: { before: 100, after: 50 },
+            children: [
+              new TextRun({
+                text: `Chủ đề ${idx + 1}: ${topic.topicName}`,
+                bold: true,
+                size: 24,
+                font: FONT_FAMILY,
+              }),
+            ],
+          }),
+          new Paragraph({
+            spacing: { after: 100 },
+            children: [
+              new TextRun({
+                text: (topic.suggestedAnswers || (topic.guideQuestions || []).map(() => 'N/A')).map((ans, aIdx) => `Q${aIdx+1}: ${ans}`).join('\n'),
+                size: 22,
+                italics: true,
+                font: FONT_FAMILY,
+              }),
+            ],
+          }),
+        ])
+      );
+    }
+
+    // Chữ ký phê duyệt chuẩn
+    answerChildren.push(createSignatureBlock(admin.teacherName));
+
+    sections.push({
+      properties: { page: { margin: MARGINS } },
+      children: answerChildren,
+    });
+  }
+
+  const doc = new Document({ sections });
+  return await Packer.toBlob(doc);
 }

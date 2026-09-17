@@ -23,6 +23,7 @@ import {
   BorderStyle,
   Packer,
 } from 'docx';
+import { generateDynamicExamFromExactTemplate } from './exactExamTemplateEngine';
 
 export interface DynamicExamConfig {
   grade: '6' | '7' | '8' | '9';
@@ -302,6 +303,19 @@ export async function generateDynamicExamDocx(cfg: DynamicExamConfig): Promise<{
   const parentAgency = (cfg.parentAgency || 'UBND XÃ ĐỒNG YÊN').toUpperCase();
   const schoolName = (cfg.schoolName || 'TRƯỜNG THCS ĐỒNG YÊN').toUpperCase();
   const academicYear = cfg.academicYear || '2026 - 2027';
+
+  // ƯU TIÊN SỐ 1: Nạp khuôn mẫu gốc chuẩn 100% của trường Đồng Yên để đảm bảo đề xuất ra ĐÚNG Y HỆT ĐỀ MẪU
+  try {
+    const exactResult = await generateDynamicExamFromExactTemplate({
+      grade,
+      term,
+      parentAgency,
+      schoolName,
+    });
+    return exactResult;
+  } catch (templateErr) {
+    console.warn('Không thể nạp đề từ template gốc, fallback sang engine docx nội tại:', templateErr);
+  }
 
   // Nếu là Đề cương ôn tập
   if (term === 'DECUONG') {

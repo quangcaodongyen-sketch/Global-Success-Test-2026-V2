@@ -20,7 +20,10 @@ import {
   consumeTrial,
   getLicenseState,
 } from '../utils/licenseManager';
-import { generateDynamicExamDocx } from '../utils/dynamicExamEngine';
+import {
+  downloadCustomizedStandardDocx,
+  generateDynamicExamFromExactTemplate,
+} from '../utils/exactExamTemplateEngine';
 
 interface ToolThanhExamViewProps {
   onExamSuccess: (info: {
@@ -294,30 +297,46 @@ export const ToolThanhExamView: React.FC<ToolThanhExamViewProps> = ({
 
   const currentMeta = EXAM_CATALOG[grade]?.[term] || EXAM_CATALOG['6']['GK1'];
 
-  // 1. Tải đề chuẩn có sẵn
-  const handleDownloadStandard = () => {
+  // 1. Tải đề chuẩn có sẵn (Tự động điền Tên Trường & Cơ quan cấp trên của Thầy/Cô)
+  const handleDownloadStandard = async () => {
     const trial = consumeTrial();
     if (!trial.allowed) {
       onOpenActivationModal();
       return;
     }
 
-    // Tải trực tiếp file từ thư mục tĩnh public
-    const link = document.createElement('a');
-    link.href = currentMeta.relPath;
-    link.download = currentMeta.file;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    setIsGenerating(true);
+    try {
+      const result = await downloadCustomizedStandardDocx({
+        relPath: currentMeta.relPath,
+        defaultFileName: currentMeta.file,
+        parentAgency,
+        schoolName,
+      });
 
-    onExamSuccess({
-      fileName: currentMeta.file,
-      examTitle: `Đề Kiểm Tra Tiếng Anh ${grade} (${term})`,
-      downloadUrl: currentMeta.relPath,
-    });
+      // Tự động tải file blob đã cá nhân hóa
+      const url = URL.createObjectURL(result.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = result.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+      onExamSuccess({
+        fileName: result.fileName,
+        examTitle: `Đề Kiểm Tra Chuẩn Tiếng Anh ${grade} (${term})`,
+        fileBlob: result.blob,
+      });
+    } catch (err: any) {
+      alert(`Đã xảy ra lỗi khi tải đề: ${err?.message || 'Lỗi không xác định'}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  // 2. Tạo đề mới ngẫu nhiên (Dynamic Generator)
+  // 2. Tạo đề mới ngẫu nhiên (ĐÚNG Y HỆT 100% ĐỀ MẪU CỦA TRƯỜNG: 4 Section, Ma trận, Đặc tả, Đề 1, Đề 2, Audio, Đáp án)
   const handleGenerateDynamic = async () => {
     const trial = consumeTrial();
     if (!trial.allowed) {
@@ -327,7 +346,7 @@ export const ToolThanhExamView: React.FC<ToolThanhExamViewProps> = ({
 
     setIsGenerating(true);
     try {
-      const result = await generateDynamicExamDocx({
+      const result = await generateDynamicExamFromExactTemplate({
         grade,
         term,
         parentAgency,
@@ -346,7 +365,7 @@ export const ToolThanhExamView: React.FC<ToolThanhExamViewProps> = ({
 
       onExamSuccess({
         fileName: result.fileName,
-        examTitle: `Đề Kiểm Tra Động Tiếng Anh ${grade} (Mã ${result.code1}-${result.code2})`,
+        examTitle: `Đề Kiểm Tra Mới Tiếng Anh ${grade} (Mã ${result.code1}-${result.code2})`,
         fileBlob: result.blob,
       });
     } catch (err: any) {

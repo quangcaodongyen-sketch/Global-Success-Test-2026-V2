@@ -18,6 +18,7 @@ interface ExamPaperViewProps {
   onSelectPaperCode: (code: string) => void;
   onGenerateNextVariant: () => void;
   onDownloadPaperDocx: (paper: ExamPaper) => void;
+  onDownloadFullPackageDocx?: () => void;
   onPracticeOnline: (paper: ExamPaper) => void;
   showCognition: boolean;
   onToggleCognition: (val: boolean) => void;
@@ -29,6 +30,7 @@ export const ExamPaperView: React.FC<ExamPaperViewProps> = ({
   onSelectPaperCode,
   onGenerateNextVariant,
   onDownloadPaperDocx,
+  onDownloadFullPackageDocx,
   onPracticeOnline,
   showCognition,
   onToggleCognition,
@@ -98,6 +100,17 @@ export const ExamPaperView: React.FC<ExamPaperViewProps> = ({
             <Printer className="w-3.5 h-3.5" />
             <span>In / Lưu PDF</span>
           </button>
+
+          {onDownloadFullPackageDocx && (
+            <button
+              onClick={onDownloadFullPackageDocx}
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+              title="Tải 1 file Word trọn gói gồm đầy đủ: Ma trận, Bản đặc tả, Đề kiểm tra và Đáp án"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Tải 1 File Word Trọn Gói</span>
+            </button>
+          )}
 
           <button
             onClick={() => onDownloadPaperDocx(currentPaper)}

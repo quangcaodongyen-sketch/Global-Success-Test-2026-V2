@@ -29,6 +29,7 @@ import {
   generateMatrixAndSpecDocx,
   generateExamPaperDocx,
   generateAnswerKeyDocx,
+  generateFullExamPackageDocx,
 } from './utils/docxExporter';
 import { exportExamSuiteZip } from './utils/zipExporter';
 import { generateMatrixExcel, generateSpecificationExcel } from './utils/excelExporter';
@@ -335,7 +336,21 @@ export default function App() {
     }
   };
 
-  // 4. Export ZIP Package following Decree 30
+  // 4. Export 1 Single Full Exam Package Word File (.docx)
+  const handleDownloadFullPackageDocx = async () => {
+    if (!suite || !Array.isArray(suite.papers) || suite.papers.length === 0) return;
+    try {
+      const blob = await generateFullExamPackageDocx(suite, showCognition);
+      const paper0 = suite.papers[0];
+      const fileName = `BoDe_TronGoi_TiengAnh_${(paper0.grade || '').replace(/\s+/g, '')}_${(paper0.examType || '').replace(/\s+/g, '_')}.docx`;
+      downloadBlob(blob, fileName);
+      showToast('📄 Đã tải xuống thành công 1 File Word trọn bộ (Ma trận + Đặc tả + Đề thi + Đáp án)!');
+    } catch (e: any) {
+      alert('Lỗi xuất file Word trọn gói: ' + e.message);
+    }
+  };
+
+  // 5. Export ZIP Package following Decree 30
   const handleExportZip = async () => {
     if (!suite || !Array.isArray(suite.papers) || suite.papers.length === 0) return;
     try {
@@ -520,25 +535,37 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* Quick ZIP Export Action Bar */}
-                      <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-3.5 rounded-xl border border-indigo-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-                        <div className="flex items-center gap-2">
+                      {/* Quick Export Action Bar */}
+                      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-3.5 rounded-xl border border-indigo-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                        <div className="flex items-center gap-2.5">
                           <FileArchive className="w-5 h-5 text-amber-400 shrink-0" />
                           <div>
-                            <p className="text-xs font-bold">Xuất Trọn Bộ Hồ Sơ Nghị Định 30 (.ZIP)</p>
+                            <p className="text-xs font-bold">Xuất Hồ Sơ Đề Kiểm Tra (Chuẩn Công Văn 7991)</p>
                             <p className="text-[11px] text-indigo-200">
-                              Bao gồm Ma trận, Bản đặc tả, tất cả Đề kiểm tra và Đáp án dạng .docx
+                              Lựa chọn tải 1 file Word trọn gói đầy đủ 4 phần hoặc tải trọn bộ file nén ZIP
                             </p>
                           </div>
                         </div>
 
-                        <button
-                          onClick={handleExportZip}
-                          className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5 shadow cursor-pointer shrink-0"
-                        >
-                          <Download className="w-4 h-4" />
-                          <span>Tải File Nén ZIP</span>
-                        </button>
+                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                          <button
+                            onClick={handleDownloadFullPackageDocx}
+                            className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5 shadow cursor-pointer shrink-0"
+                            title="Tải 1 file Word duy nhất đầy đủ Ma trận, Bản đặc tả, Đề thi và Đáp án"
+                          >
+                            <FileText className="w-4 h-4" />
+                            <span>📄 Tải 1 File Word Trọn Gói</span>
+                          </button>
+
+                          <button
+                            onClick={handleExportZip}
+                            className="px-3.5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-lg transition flex items-center justify-center gap-1.5 shadow cursor-pointer shrink-0"
+                            title="Tải trọn bộ các tệp Word riêng lẻ đóng gói dạng ZIP"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>📦 Tải File Nén ZIP</span>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Tab Render Views */}
@@ -549,6 +576,7 @@ export default function App() {
                           onSelectPaperCode={setActivePaperCode}
                           onGenerateNextVariant={handleGenerateNextVariant}
                           onDownloadPaperDocx={handleDownloadPaperDocx}
+                          onDownloadFullPackageDocx={handleDownloadFullPackageDocx}
                           onPracticeOnline={(paper) => setPracticePaper(paper)}
                           showCognition={showCognition}
                           onToggleCognition={setShowCognition}
